@@ -281,3 +281,10 @@ class Vector2 {
 function perlinNoise(x,y){
 
 }
+
+document.addEventListener('keydown', function (event) {
+    let key = event.which || event.keyCode;
+    try{
+        keyPressed(key);
+    }catch(err){}
+});

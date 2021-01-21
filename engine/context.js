@@ -3,6 +3,8 @@ let FPS = 60, fpsInterval =  1000 / FPS, lastFrameTime, deltaT, now;
 let startedLoop = false;
 let body;
 
+let fillColor, strokeWeight, strokeColor;
+
 window.onload = () => {
     body = document.getElementsByTagName('body')[0];
     body.style.overflow = 'hidden';
@@ -57,6 +59,9 @@ function createCanvas(_width, _height){
     }
 
     ctx = canvas.getContext('2d');
+
+    fill('grey');
+    stroke(1,'black');
 }
 
 function createFullScreenCanvas(){
@@ -124,33 +129,62 @@ function background(color){
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-function rect(x, y, w, h, color){
-    //ctx.fillRect(x, y, w, h);
+function rect(x, y, w, h){
     ctx.rect(x, y, w, h);
-    if(color) fill(color);
+
+    pathStyle();
 }
 
 function circle(x, y, radius){
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2, false);
     ctx.closePath();
+
+    pathStyle();
 }
 
 function elipse(x, y, w, h){
     ctx.beginPath();
     ctx.ellipse(x, y, w, h, 0, 0, Math.PI * 2);
     ctx.closePath();
+
+    pathStyle();
 }
 
-function stroke(width, color){
-    ctx.lineWidth = width;
-    ctx.strokeStyle = color;
-    ctx.stroke();
+function line(x1, y1, x2, y2){
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.closePath();
+
+    ctx.lineWidth = strokeWeight;
+    ctx.strokeStyle = strokeColor;
+    if(strokeWeight && strokeColor) ctx.stroke();
 }
 
-function fill(color){
-    ctx.fillStyle = color;
-    ctx.fill();
+function stroke(weight, color){
+    strokeWeight = weight;
+    strokeColor = color;
+}
+
+function noFill(){
+    fillColor = null;
+}
+
+function noStroke(){
+    strokeWeight = null;
+    strokeColor = null;
+}
+
+function fill(color){ fillColor = color; }
+
+function pathStyle(){
+    ctx.fillStyle = fillColor;
+    ctx.lineWidth = strokeWeight;
+    ctx.strokeStyle = strokeColor;
+
+    if(fillColor) ctx.fill();
+    if(strokeWeight && strokeColor) ctx.stroke();
 }
 
 function image(src, sourceXoffset = 0, sourceYoffset = 0, sourceWidth, sourceHeight,
@@ -174,6 +208,24 @@ function numberRemap(value, start1, stop1, start2, stop2){
 
 function lerp(v0, v1, t) {
     return (1 - t) * v0 + t * v1;
+}
+
+function random(min, max){
+    return Math.random() * (max - min) + min;
+    // 'float' random number between min - max
+}
+
+function canvasGetPixels(){
+    return ctx.getImageData(0, 0, canvas.width, canvas.height);
+    // retuns an ImageData with .data being Uint8ClampedArray with the value of each pixel in the format rgba
+}
+
+function canvasUpdatePixels(newImageData){
+    // pixelsArray.length should be equal to canvas.width * canvas.height * 4
+    // let buffer = new Uint8ClampedArray(pixelsArray.length); 
+    // let newCanvas = ctx.createImageData(canvas.width, canvas.height);
+    //newCanvas.data.set(buffer);
+    ctx.putImageData(newImageData, 0, 0);
 }
 
 class Vector2 {
@@ -223,5 +275,9 @@ class Vector2 {
         this.x *= vec.x;
         this.y *= vec.y;
     }
+
+}
+
+function perlinNoise(x,y){
 
 }

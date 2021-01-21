@@ -1,27 +1,19 @@
 function start(){
-    //createCanvas(800, 800);
-    createResponsiveCanvas(16,9);
-    //createFullScreenCanvas();
+    //createCanvas(800,800);
+    createFullScreenCanvas();
 }
 
 function update(){
-    background('#202020');
+    let imageData = canvasGetPixels();
 
-    rect(100,100,100,100);
-    fill('red');
-    stroke(5, 'white');
+    for(let i = 0; i < imageData.data.length; i += 4){
+        let r = Math.floor(random(0,255));
 
-    circle(300,150,50);
-    fill('blue');
-    stroke(5, 'purple');
+        imageData.data[0 + i] = r;
+        imageData.data[1 + i] = r;
+        imageData.data[2 + i] = r;
+        imageData.data[3 + i] = 255;
+    }
 
-    circle(450,150,50);
-    fill('cyan');
-    stroke(5, 'gray');
-
-    circle(600,150,50);
-    stroke(0, 'white');
-
-    image('cat.jpeg', null, null, null, null,
-        750, 100, 450, 300);
+    canvasUpdatePixels(imageData);
 }

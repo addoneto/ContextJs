@@ -10,31 +10,35 @@ let gFill, gStrokeWeight, gStrokeColor;
 window.onload = function () {
     body = document.getElementsByTagName('body')[0];
     body.style.overflow = 'hidden';
-    // TODO: blocking preload function that wait until async operations finishes
-    try {
 
-        start();
-    }
-    catch (err) {
+    try { if (start) start(); } catch (err) {
         console.error('Start function not found');
     }
-    updateLoop();
-    lastFrameTime = Date.now();
-    fixedUpdateLoop();
-    startedLoop = true;
-    try {
-        canvas.onmousedown = event => {
 
-            event = event || window.event;
-            const rect = canvas.getBoundingClientRect();
-            try {
-
-                click(Math.trunc(event.clientX - rect.left), Math.trunc(event.clientY - rect.top));
-            }
-            catch (err) { }
-        };
+    try { if (update) updateLoop(); } catch (err) {
+        console.error('Update function not found');
     }
-    catch (err) { }
+
+    try {
+        if (fixedUpdate) {
+            lastFrameTime = Date.now();
+            fixedUpdateLoop();
+            startedLoop = true;
+        }
+    } catch (err) {
+        console.error('FixedUpdate function not found');
+    }
+
+    try {
+        if (click) {
+            canvas.onmousedown = event => {
+                event = event || window.event;
+                const rect = canvas.getBoundingClientRect();
+                click(Math.trunc(event.clientX - rect.left),
+                        Math.trunc(event.clientY - rect.top));
+            };
+        }
+    } catch (err) { }
 };
 
 // ************************************************************************** //
@@ -175,6 +179,16 @@ function line(x1, y1, x2, y2) {
         ctx.stroke();
 }
 
+
+function translate(x, y){
+    ctx.translate(x, y);
+}
+
+function returnTranslate(){
+    let canvasInfo = ctx.getTransform();
+    ctx.translate(- canvasInfo.e, - canvasInfo.f);
+}
+
 // ************************************************************************** //
 // ****************************** PATH STYLING ****************************** //
 // ************************************************************************** //
@@ -207,13 +221,7 @@ function style() {
 // ********************************* IMAGES ********************************* //
 // ************************************************************************** //
 
-function blockingLoadImage(src) {
-    const img = new Image();
-    img.src = src;
-    img.onload = () => {};
-};
-
-async function loadImage(source) {
+async function asyncLoadImage(source) {
     return new Promise(resolve => {
         const img = new Image();
         img.src = source;
@@ -224,7 +232,7 @@ async function loadImage(source) {
     });
 }
 
-function callbackLoadImage(source, callback) {
+function loadImage(source, callback) {
     const img = new Image();
     img.src = source;
     img.onload = callback;
@@ -232,26 +240,22 @@ function callbackLoadImage(source, callback) {
 }
 
 function image(src, sourceXoffset = 0, sourceYoffset = 0, sourceWidth, sourceHeight, finalX, finalY, finalWidth, finalHeight) {
-    let image;
     if (typeof src === "string") {
-        image = new Image();
+        let image = new Image();
         image.src = src;
+
+        image.onload = function () {
+            if (!sourceWidth) sourceWidth = image.width;
+            if (!sourceHeight) sourceHeight = image.height;
+            if (!finalWidth) finalWidth = image.width;
+            if (!finalHeight) finalHeight = image.height;
+            ctx.drawImage(image, sourceXoffset, sourceYoffset, sourceWidth, sourceHeight, finalX, finalY, finalWidth, finalHeight);
+        }
     }
     else if (typeof src === "object") {
-        image = src;
+        ctx.drawImage(src, sourceXoffset, sourceYoffset, sourceWidth, sourceHeight, finalX, finalY, finalWidth, finalHeight);
     }
-    else
-        return;
-    //image.onload = function (): void {}
-    if (!sourceWidth)
-        sourceWidth = image.width;
-    if (!sourceHeight)
-        sourceHeight = image.height;
-    if (!finalWidth)
-        finalWidth = image.width;
-    if (!finalHeight)
-        finalHeight = image.height;
-    ctx.drawImage(image, sourceXoffset, sourceYoffset, sourceWidth, sourceHeight, finalX, finalY, finalWidth, finalHeight);
+    else return;
 }
 
 // ************************************************************************** //
@@ -301,6 +305,12 @@ class Vector2 {
     sqrMag() { return this.x * this.x + this.y * this.y; }
 
     mag() { return Math.sqrt(this.sqrMag()); }
+
+    setMag(x){
+        let mag = this.mag();
+        this.x = this.x / mag * x;
+        this.y = this.y / mag * x;
+    }
 
     normalize() {
         let mag = this.mag();
@@ -383,10 +393,8 @@ function perlinNoise(x, y) {
 
 // TODO: return only the Uint8ClampedArray pixel array
 function getPixels(x = 0, y = 0, w = null, h = null) {
-    if (!w)
-        w = canvas.width;
-    if (!h)
-        h = canvas.height;
+    if (!w) w = canvas.width;
+    if (!h) h = canvas.height;
     return ctx.getImageData(x, y, w, h);
 }
 function updatePixels(imgData, x = 0, y = 0) {
@@ -420,7 +428,6 @@ document.addEventListener('keyup', function (event) {
 let mouseX, mouseY;
 
 document.onmousemove = event => {
-
     event = event || window.event;
     const rect = canvas.getBoundingClientRect();
     mouseX = Math.trunc(event.clientX - rect.left);

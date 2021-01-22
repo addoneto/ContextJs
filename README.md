@@ -109,6 +109,26 @@ To set a different Frame rate call `setFrameRate` on the `start` function with t
 
 This function cover whole the canvas with an specified color. The color is supplied as a string in the form of any valid css color, such as hex, common names or rgb.
 
+### Clear Canvas
+
+```javascript
+    clear();
+```
+
+### Translate
+
+Use the function `translate(x, y)` to move all canvas matrix to an specific position choose, remaping the [0, 0] to it.
+
+```javascript
+    translate(canvas.width / 2, canvas.height / 2);
+```
+
+To restore the default translation use `returnTranslate`.
+
+```javascript
+    returnTranslate();
+```
+
 ### Drawing shapes
 
 #### Rectangle
@@ -158,6 +178,15 @@ Similar as `fill`, `stroke` create a line on the outside of a shape.
     stroke(1, 'black');
 ```
 
+<br>
+
+Booth settings can be removing simply by adding a `no` after the common function.
+
+```javascript
+    noFill();
+    noStroke();
+```
+
 ### Images
 
 ```javascript
@@ -176,24 +205,34 @@ ContextJs provides a only one image function with optional params, being the onl
 
 #### Loading Images
 
-You can also load an image before really displaying it. This can be handy when you want to acess image information before showing it.
+You can also load an image before really displaying it. This can be handy when you want to acess image information before showing it, or to remove `onload` on the `image` function itself.
 
 ```javascript
-    let image = await loadImage(src);
+    let image = await asyncLoadImage(src);
 ```
 
-`loadImage` returns an Image object witch contains a width and a height. Equivalent of creating an img DOM element inside the canvas.
+`asyncLoadImage` returns an Image object witch contains a width and a height. Equivalent of creating an img DOM element inside the canvas.
 
 To prevent erros the function returns a promisse that only fullfil when the image is loaded. The implementation, however, utilizes `await` to avoid using callbacks, so the start function need to be async.
 
 Of course there is the option of using `then` but It is not the recomended way.
 
 ```javascript
-    loadImage('cat.jpeg').then(image => {});
+    asyncLoadImage('path').then(image => {});
 ```
 <br>
 
 To show a loaded image just pass the image object insted of its source on `image()`.
+
+Other way of loading a image is using a callback that is called soon when the image is loaded.
+
+```javascript
+    loadImage('path', function() {
+        const image = this;
+    }); 
+```
+
+> In future Update an preload will be added, so the assets can be loaded in an blocking way, removing the need of promises or callbacks in the start / update functions.
 
 ### Math functions
 
@@ -250,10 +289,24 @@ It can be realy useful to use sqrMag instead of mag. Doing the square root of a 
 #### Normalize
 
 ```javascript
-    vector.normalize();
+    vector.Normalize();
 ```
 
-Preserves the direction of the vector but changes its magnitude to 1.
+Preserves the direction of the vector but changes its magnitude to 1. You can also use lowercase `normalize` that returns the final vector but don't change the it self.
+
+```javascript
+    let new_vector = vector.normalize();
+```
+
+#### Set Magnitude
+
+Changes the magnitude of a vector preserving its direction.
+
+```javascript
+    vector.setMag(100);
+```
+
+It consists basically in multiplying an unit vector (normalized) by the desired magnitude.
 
 #### Distance
 
@@ -262,6 +315,11 @@ Preserves the direction of the vector but changes its magnitude to 1.
 ```
 
 Returns the distance between two vectors.
+
+```javascript
+    // static dist
+    let dist = Vector2.dist(vector1, vector2);
+```
 
 ##### Static Distance
 
@@ -291,6 +349,12 @@ As explained on  [Square Magnitude](#Square-Magnitude) this function can be real
 ```
 
 Perform a simple operation between two vectors. The vector that called the method is changed by the result. The process consists in just calculating the operation in x and y of each vector respectively.
+
+You can also use the static version that return the operation between two given vectors.
+
+```javascript
+    let addition = Vector2.add(vector1, vector2);
+```
 
 \* Other operation such as the `dot product` are planned to be added in future updated.
 
@@ -360,6 +424,16 @@ The functions `keyDown` and `keyUp` will be called when a keyboard key is presse
     function keyUp(keyCode){ /* your code */ }
 ```
 
+##### Default key codes
+
+| Variable name | Code |
+|-------------|----|
+| ARROW_UP    | 38 |
+| ARROW_DOWN  | 40 |
+| ARROW_LEFT  | 37 |
+| ARROW_RIGHT | 39 |
+| SPACE       | 32 |
+
 #### Recommendations
 
 There is a delay between maintain the key pressed and the continous `keyDown` calls. `keyDown` will be called just when a key is pressed, hovewer, when some key is keep presed a delay appear. This can results in snapy unenjoyable controlls for a player, for exemple.
@@ -428,6 +502,16 @@ You can work around this by adding a velocity that is added to the player positi
     }
 ```
 
+### Mouse Input
+
+The global variables `MouseX` and `MouseY` can be used to get the mouse position relative to the canvas.
+
+```javascript
+    function click(x, y){ /* your code */ }
+```
+
+You can implement `click()` on your code, it is called when a click is performed inside the canvas. Arguments `x` and `y` are, as MouseX and MouseY, relative to canvas.
+
 ### Pixel Manipulation
 
 ContextJs offers a function that get all the pixels of an specific region of the canvas. It returns an ImageData object that stores:
@@ -484,4 +568,12 @@ function update(){
 }
 ```
 
-##### Black & White Image Filter
+#### Canvas Tantained Error
+
+Even when displaying local image files it is possible to get the error with `canvasGetPixels`:
+
+```
+execute 'getImageData' on 'CanvasRenderingContext2D': The canvas has been tainted by cross-origin data
+```
+
+There is this security check on some browser that forbides performing `getImageData` after rendering an supposedly cross-origin data (e.g Images). I will persist searching about the error and probably in further updates this will be fixed.

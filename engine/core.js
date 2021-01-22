@@ -12,10 +12,12 @@ window.onload = function () {
     body.style.overflow = 'hidden';
 
     try { if (start) start(); } catch (err) {
-        console.error('Start function not found');
+        console.error('Start function not found or error could be found');
     }
 
-    try { if (update) updateLoop(); } catch (err) {
+    try { 
+        if (update) updateLoop(); 
+    } catch (err) {
         console.error('Update function not found');
     }
 
@@ -59,21 +61,18 @@ function fixedUpdateLoop() {
     if (deltaT > fpsInterval) {
         // subtract by (deltaT % fpsInterval) makes sure lastFrameTime is multiple of fpsInterval
         lastFrameTime = now - (deltaT % fpsInterval);
-        try {
+        // try {} catch (err) { }
 
-            fixedUpdate();
-        }
-        catch (err) { }
+        fixedUpdate();
+        
     }
 }
 
 function updateLoop() {
-    try {
+    // try {} catch (err) { }
 
-        update();
-        requestAnimationFrame(updateLoop);
-    }
-    catch (err) { }
+    update();
+    requestAnimationFrame(updateLoop);
 }
 
 // ************************************************************************** //

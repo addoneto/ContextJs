@@ -16,6 +16,11 @@ All the code necessary for the library is in just one short file
 
 You can of course use the minified version that should perform a little faster.<br/> \* To prevent Errors add your script before the library.
 
+If you don't want to download the code to use in your project there is this awesome toll called [JsDeliver](https://www.jsdelivr.com/). It's a free CDN that can provides github projects. So you can add the link on your code and have fun without downloading anything.
+
+https://cdn.jsdelivr.net/gh/addoneto/ContextJs@master/engine/context.js
+https://cdn.jsdelivr.net/gh/addoneto/ContextJs@master/engine/context.min.js
+
 ### The `Setup` Method
 
 The function `setup` is executed just when the page is loaded and every content is loaded. Adding it on the 
@@ -66,10 +71,6 @@ There is also an option for resizing the canvas at runt time. It asks for a widt
     canvasResize(600, 300);
 ```
 
-`canvasResize`
-
-> ! If no canvas is created after the `start` function an fullscreen canvas will be automatically created.
-
 ### Game Loop
 
 ContextJS provides two Game loop / Update functions
@@ -106,7 +107,7 @@ To set a different Frame rate call `setFrameRate` on the `start` function with t
     background('rgb(255,255,255)');
 ```
 
-This function cover hole the canvas with an specified color. The color is supplied as a string in the form of any valid css color, such as hex, common names or rgb.
+This function cover whole the canvas with an specified color. The color is supplied as a string in the form of any valid css color, such as hex, common names or rgb.
 
 ### Drawing shapes
 
@@ -170,9 +171,29 @@ ContextJs provides a only one image function with optional params, being the onl
 - Image source path
 - Destination position x
 - Destination position y
-
 ![params explanation](https://media.prod.mdn.mozit.cloud/attachments/2012/07/09/225/46ffb06174df7c077c89ff3055e6e524/Canvas_drawimage.jpg)
-Mozila web docs
+<br>Mozila web docs
+
+#### Loading Images
+
+You can also load an image before really displaying it. This can be handy when you want to acess image information before showing it.
+
+```javascript
+    let image = await loadImage(src);
+```
+
+`loadImage` returns an Image object witch contains a width and a height. Equivalent of creating an img DOM element inside the canvas.
+
+To prevent erros the function returns a promisse that only fullfil when the image is loaded. The implementation, however, utilizes `await` to avoid using callbacks, so the start function need to be async.
+
+Of course there is the option of using `then` but It is not the recomended way.
+
+```javascript
+    loadImage('cat.jpeg').then(image => {});
+```
+<br>
+
+To show a loaded image just pass the image object insted of its source on `image()`.
 
 ### Math functions
 
@@ -242,6 +263,14 @@ Preserves the direction of the vector but changes its magnitude to 1.
 
 Returns the distance between two vectors.
 
+##### Static Distance
+
+If you want to get the distance between two vectors without actually instantiating they use the static distance.
+
+```javascript
+    let dist = Vector2.dist(vector1, vector2);
+```
+
 #### Square Distance
 
 ```javascript
@@ -264,3 +293,195 @@ As explained on  [Square Magnitude](#Square-Magnitude) this function can be real
 Perform a simple operation between two vectors. The vector that called the method is changed by the result. The process consists in just calculating the operation in x and y of each vector respectively.
 
 \* Other operation such as the `dot product` are planned to be added in future updated.
+
+#### Angle to Direction
+
+```javascript
+    let vector = Vector2.angleToDirectionVector()
+```
+
+Static method that returns a Vector2 pointing to the direction. It consists bassicaly in:
+
+```javascript
+    vector.x = Math.cos(angle);
+    vector.y = Math.sin(angle);
+```
+
+The function automatically converts the angle to radians
+
+\* The mag of the vector will be by default 1, since trigonometric circle has radius of 1.
+
+### Angles
+
+#### Converting Degrees to Radians
+
+In javascript an in many other languages, trigonometry equations functions need to receive radians values, while we are used to thinking in degress.
+
+```javascript
+    let angle = deg2rad(angle_in_degrees);
+```
+
+<p align="center">radians = degrees × π /180 </p>
+
+#### Cosine, Sine and Tangent
+
+ContextJs provides cosine and sine functions using degrees, with intrinsic conversion to radians. 
+
+```javascript
+    let cos = cos(angle_in_degrees);
+    let sin = sin(angle_in_degrees);
+    let tan = tan(angle_in_degrees);
+```
+
+### Random
+
+The random function returns a value between a range of values defined by min (included) and max (excluded). Contaning 16 decimal points.
+
+```javascript
+    let v = random(1,10);
+```
+
+#### Random integer
+
+```javascript
+    let v = randint(1,10);
+```
+
+> In further updates Coherent Pseudo Random Noise will be added. Such as Improved Perlin Noise and Simplex Noise.
+
+### Keyboard Input
+
+#### Keydown and Keyup Event
+
+The functions `keyDown` and `keyUp` will be called when a keyboard key is pressed or released, respectively.
+
+```javascript
+    function keyDown(keyCode){ /* your code */ }
+    function keyUp(keyCode){ /* your code */ }
+```
+
+#### Recommendations
+
+There is a delay between maintain the key pressed and the continous `keyDown` calls. `keyDown` will be called just when a key is pressed, hovewer, when some key is keep presed a delay appear. This can results in snapy unenjoyable controlls for a player, for exemple.
+
+You can work around this by adding a velocity that is added to the player position each frame and reseting it when a key is up.
+
+```javascript
+    class Player{
+        constructor(x, y){
+            this.pos = new Vector2(x, y);
+            this.dir = new Vector2(0, 0);
+        }
+
+        update(){
+            this.pos.add(this.dir);
+        }
+
+        draw(){
+            fill('red');
+            circle(this.pos.x, this.pos.y, 15);
+        }
+
+        setDirection(x, y){
+            this.dir.x = x;
+            this.dir.y = y;
+        }
+    }
+
+    let player;
+
+    function start(){
+        createCanvas(800,800);
+        player = new Player(50, 50);
+    }
+
+    function update(){
+        background('rgb(50,50,50)');
+        player.draw();
+    }
+
+    function fixedUpdate(){
+        player.update();
+    }
+
+    function keyDown(key){
+        switch(key){
+            case 37: // Left arrow
+                player.setDirection(-1, 0);
+                break;
+            case 38: // Up arrow
+                player.setDirection(0, -1);
+                break;
+            case 39: // Right arrow
+                player.setDirection(1, 0);
+                break;
+            case 40: // Down arrow
+                player.setDirection(0, 1);
+                break;
+        }
+    }
+
+    function keyUp(key){
+        if(key === 37 || key === 38 || key === 39 || key === 40){
+            player.setDirection(0, 0);
+        }
+    }
+```
+
+### Pixel Manipulation
+
+ContextJs offers a function that get all the pixels of an specific region of the canvas. It returns an ImageData object that stores:
+
+- .data (Uint8ClampedArray)
+- width
+- height
+
+The data contains information of each pixel that you can manipulate just like in an array.
+
+> Each pixel has 4 index values on the data array: Red, Green, Blue and Alpha. 
+
+```javascript
+    // Get pixels from the whole canvas
+    imageData = canvasGetPixels();
+    pixels = imageData.data;
+
+    // Get pixels from specific square region
+    imageData2 = canvasGetPixels(xpos, ypos, width, height);
+```
+
+#### Updating
+
+Simply chanching the data of an ImageData instance does not update the result on the screen automatically. So, when all the manipulation is done you have to call `canvasUpdatePixels`.
+
+```javascript
+    canvasUpdatePixels(imageData [,x] [,y]);
+```
+
+#### Examples
+
+##### TV Random Noise
+
+![preview](https://user-images.githubusercontent.com/25326579/105415123-2209c180-5c17-11eb-9ca6-bdab2af790d0.png)
+
+```javascript
+function start(){
+    createFullScreenCanvas();
+}
+
+function update(){
+    let imageData = canvasGetPixels();
+
+    for(let i = 0; i < imageData.data.length; i += 4){
+        let r = Math.floor(random(0,255));
+
+        imageData.data[0 + i] = r;
+        imageData.data[1 + i] = r;
+        imageData.data[2 + i] = r;
+        imageData.data[3 + i] = 255;
+    }
+
+    canvasUpdatePixels(imageData);
+}
+```
+
+##### Black & White Image Filter

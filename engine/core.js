@@ -2,10 +2,17 @@ let canvas, ctx, aspectRatio = null, padding, fullscreen = false;
 let FPS, fpsInterval = 1000 / FPS, lastFrameTime, deltaT, now, startedLoop;
 let body;
 let gFill, gStrokeWeight, gStrokeColor;
+
+// ************************************************************************** //
+// ********************************* START ********************************** //
+// ************************************************************************** //
+
 window.onload = function () {
     body = document.getElementsByTagName('body')[0];
     body.style.overflow = 'hidden';
+    // TODO: blocking preload function that wait until async operations finishes
     try {
+
         start();
     }
     catch (err) {
@@ -15,65 +22,101 @@ window.onload = function () {
     lastFrameTime = Date.now();
     fixedUpdateLoop();
     startedLoop = true;
+    try {
+        canvas.onmousedown = event => {
+
+            event = event || window.event;
+            const rect = canvas.getBoundingClientRect();
+            try {
+
+                click(Math.trunc(event.clientX - rect.left), Math.trunc(event.clientY - rect.top));
+            }
+            catch (err) { }
+        };
+    }
+    catch (err) { }
 };
+
+// ************************************************************************** //
+// ******************************* GAME LOOPS ******************************* //
+// ************************************************************************** //
+
 function setFrameRate(_fps) {
     if (startedLoop)
         return console.error('Cannot set Framerate after start');
     FPS = _fps;
     fpsInterval = 1000 / FPS;
 }
+
 function fixedUpdateLoop() {
     requestAnimationFrame(fixedUpdateLoop);
     now = Date.now();
     deltaT = now - lastFrameTime;
     if (deltaT > fpsInterval) {
+        // subtract by (deltaT % fpsInterval) makes sure lastFrameTime is multiple of fpsInterval
         lastFrameTime = now - (deltaT % fpsInterval);
         try {
+
             fixedUpdate();
         }
         catch (err) { }
     }
 }
+
 function updateLoop() {
     try {
+
         update();
         requestAnimationFrame(updateLoop);
     }
     catch (err) { }
 }
+
+// ************************************************************************** //
+// ********************************* CANVAS ********************************* //
+// ************************************************************************** //
+
 function createCanvas(_width = 500, _height = 500) {
     canvas = document.createElement('canvas');
     body.appendChild(canvas);
     canvas.width = _width;
     canvas.height = _height;
     ctx = canvas.getContext('2d');
+    // default shape config
     fill('grey');
     stroke(1, 'black');
 }
+
 function createFullScreenCanvas() {
     fullscreen = true;
     createCanvas();
+
     window.addEventListener('resize', canvasResize);
     canvasResize();
 }
+
 function createResponsiveCanvas(aspectRatioX, aspectRatioY, _padding) {
     createCanvas();
     aspectRatio = [aspectRatioX, aspectRatioY];
     padding = _padding;
+
     window.addEventListener('resize', canvasResize);
     canvasResize();
 }
+
 function canvasResize(_w = null, _h = null) {
     if (fullscreen) {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         return;
     }
+
     if (_w && _h) {
         canvas.width = _w;
         canvas.height = _h;
         return;
     }
+
     if (aspectRatio) {
         let width = window.innerWidth, height = window.innerHeight;
         let w, h;
@@ -93,6 +136,11 @@ function canvasResize(_w = null, _h = null) {
         canvas.height = h - padding;
     }
 }
+
+// ************************************************************************** //
+// ********************************* SHAPES ********************************* //
+// ************************************************************************** //
+
 function background(color) {
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -126,6 +174,11 @@ function line(x1, y1, x2, y2) {
     if (gStrokeWeight && gStrokeColor)
         ctx.stroke();
 }
+
+// ************************************************************************** //
+// ****************************** PATH STYLING ****************************** //
+// ************************************************************************** //
+
 function noFill() {
     gFill = null;
 }
@@ -149,21 +202,35 @@ function style() {
     if (gStrokeWeight && gStrokeColor)
         ctx.stroke();
 }
+
+// ************************************************************************** //
+// ********************************* IMAGES ********************************* //
+// ************************************************************************** //
+
+function blockingLoadImage(src) {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {};
+};
+
 async function loadImage(source) {
     return new Promise(resolve => {
         const img = new Image();
         img.src = source;
         img.onload = function () {
+
             resolve(this);
         };
     });
 }
+
 function callbackLoadImage(source, callback) {
     const img = new Image();
     img.src = source;
     img.onload = callback;
     return img;
 }
+
 function image(src, sourceXoffset = 0, sourceYoffset = 0, sourceWidth, sourceHeight, finalX, finalY, finalWidth, finalHeight) {
     let image;
     if (typeof src === "string") {
@@ -175,18 +242,22 @@ function image(src, sourceXoffset = 0, sourceYoffset = 0, sourceWidth, sourceHei
     }
     else
         return;
-    image.onload = function () {
-        if (!sourceWidth)
-            sourceWidth = image.width;
-        if (!sourceHeight)
-            sourceHeight = image.height;
-        if (!finalWidth)
-            finalWidth = image.width;
-        if (!finalHeight)
-            finalHeight = image.height;
-        ctx.drawImage(image, sourceXoffset, sourceYoffset, sourceWidth, sourceHeight, finalX, finalY, finalWidth, finalHeight);
-    };
+    //image.onload = function (): void {}
+    if (!sourceWidth)
+        sourceWidth = image.width;
+    if (!sourceHeight)
+        sourceHeight = image.height;
+    if (!finalWidth)
+        finalWidth = image.width;
+    if (!finalHeight)
+        finalHeight = image.height;
+    ctx.drawImage(image, sourceXoffset, sourceYoffset, sourceWidth, sourceHeight, finalX, finalY, finalWidth, finalHeight);
 }
+
+// ************************************************************************** //
+// ***************************** MATH FUNCTIONS ***************************** //
+// ************************************************************************** //
+
 function map(value, start1, stop1, start2, stop2) {
     return (value - start1) / (stop1 - start1) * (stop2 - start2) + start2;
 }
@@ -201,6 +272,9 @@ function randint(min, max) {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min)) + min;
 }
+
+// ********************************* ANGLES ********************************* //
+
 function deg2rad(degrees_angle) {
     return degrees_angle * Math.PI / 180;
 }
@@ -213,49 +287,66 @@ function cos(degrees_angle) {
 function tan(degrees_angle) {
     return Math.tan(deg2rad(degrees_angle));
 }
+
+// ************************************************************************** //
+// ******************************** VECTOR 2 ******************************** //
+// ************************************************************************** //
+
 class Vector2 {
     constructor(_x, _y) {
         this.x = _x;
         this.y = _y;
     }
+
     sqrMag() { return this.x * this.x + this.y * this.y; }
+
     mag() { return Math.sqrt(this.sqrMag()); }
+
     normalize() {
         let mag = this.mag();
         return new Vector2(this.x / mag, this.y / mag);
     }
+
     Normalize() {
         let mag = this.mag();
         this.x /= mag;
         this.y /= mag;
     }
+
     distSqr(vector) {
         let deltaX = this.x - vector.x;
         let deltaY = this.y - vector.y;
         return deltaX * deltaX + deltaY * deltaY;
     }
+
     dist(vector) {
         return Math.sqrt(this.distSqr(vector));
     }
+
     static dist(vector1, vector2) {
         let deltaX = vector1.x - vector2.x;
         let deltaY = vector1.y - vector2.y;
         return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     }
+
     static angleToDirection(degrees_angle) {
         return new Vector2(Math.cos(deg2rad(degrees_angle)), Math.sin(deg2rad(degrees_angle)));
     }
+
     add(vector) {
         this.x += vector.x;
         this.y += vector.y;
     }
+
     static add(vector1, vector2) {
         return new Vector2(vector1.x + vector2.x, vector1.y + vector2.y);
     }
+
     subtract(vector) {
         this.x -= vector.x;
         this.y -= vector.y;
     }
+
     static subtract(vector1, vector2) {
         return new Vector2(vector1.x - vector2.x, vector1.y - vector2.y);
     }
@@ -263,20 +354,34 @@ class Vector2 {
         this.x /= vector.x;
         this.y /= vector.y;
     }
+
     static divide(vector1, vector2) {
         return new Vector2(vector1.x / vector2.x, vector1.y / vector2.y);
     }
+
     multiply(vector) {
         this.x *= vector.x;
         this.y *= vector.y;
     }
+
     static multiply(vector1, vector2) {
         return new Vector2(vector1.x * vector2.x, vector1.y * vector2.y);
     }
 }
+
+// ************************************************************************** //
+// ********************************** NOISE ********************************* //
+// ************************************************************************** //
+
 function perlinNoise(x, y) {
     return 0;
 }
+
+// ************************************************************************** //
+// *************************** PIXEL MANIPULATION *************************** //
+// ************************************************************************** //
+
+// TODO: return only the Uint8ClampedArray pixel array
 function getPixels(x = 0, y = 0, w = null, h = null) {
     if (!w)
         w = canvas.width;
@@ -287,33 +392,37 @@ function getPixels(x = 0, y = 0, w = null, h = null) {
 function updatePixels(imgData, x = 0, y = 0) {
     ctx.putImageData(imgData, x, y);
 }
+
+// ************************************************************************** //
+// ********************************** INPUT ********************************* //
+// ************************************************************************** //
+
 const ARROW_UP = 38, ARROW_DOWN = 40, ARROW_LEFT = 37, ARROW_RIGHT = 39, SPACE = 32;
+
 document.addEventListener('keydown', function (event) {
     let key = event.which || event.keyCode;
     try {
+
         keyDown(key);
     }
     catch (err) { }
 });
+
 document.addEventListener('keyup', function (event) {
     let key = event.which || event.keyCode;
     try {
+
         keyUp(key);
     }
     catch (err) { }
 });
+
 let mouseX, mouseY;
+
 document.onmousemove = event => {
+
     event = event || window.event;
     const rect = canvas.getBoundingClientRect();
     mouseX = Math.trunc(event.clientX - rect.left);
     mouseY = Math.trunc(event.clientY - rect.top);
-};
-canvas.onmousedown = event => {
-    event = event || window.event;
-    const rect = canvas.getBoundingClientRect();
-    try {
-        click(Math.trunc(event.clientX - rect.left), Math.trunc(event.clientY - rect.top));
-    }
-    catch (err) { }
 };

@@ -339,7 +339,7 @@ class Vector2 {
     }
 
     static angleToDirection(degrees_angle) {
-        return new Vector2(Math.cos(deg2rad(degrees_angle)), Math.sin(deg2rad(degrees_angle)));
+        return new Vector2(Math.cos(deg2rad(degrees_angle)), -Math.sin(deg2rad(degrees_angle)));
     }
 
     add(vector) {

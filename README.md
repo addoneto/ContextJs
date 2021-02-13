@@ -1,10 +1,16 @@
-# ContentJS Library
+<p align="center">
+<img width="300" height="300" src="https://user-images.githubusercontent.com/25326579/106518655-fc06db80-64b8-11eb-9fc2-7884370b455d.png">
+</p>
+
+# ContextJS Library
 
 A minimal library made to simplify the repetitive action of creating canvas basis in JavaScript. It provides simple to use functions, implementing things such as a game loop and responsive canvas size.
 
 ___
 
 ## Documentation
+
+<span style="color:red">! Documentation will be refactor son when the new library core is finished</span>.
 
 ### Adding the library to a project
 
